@@ -333,6 +333,9 @@ hostapd_common_add_bss_config() {
 	config_add_boolean multicast_to_unicast per_sta_vif
 
 	config_add_array hostapd_bss_options
+
+	config_add_int eap_server
+	config_add_string eap_user_file dh_file server_cert
 }
 
 hostapd_set_vlan_file() {
@@ -597,34 +600,50 @@ hostapd_set_bss_options() {
 			wps_possible=1
 		;;
 		eap|eap192|eap-eap192)
-			json_get_vars \
-				auth_server auth_secret auth_port \
-				dae_client dae_secret dae_port \
-				ownip radius_client_addr \
-				eap_reauth_period
+			json_get_vars eap_server
 
-			# radius can provide VLAN ID for clients
-			vlan_possible=1
+			if [ "$eap_server" -ge 1 ]; then
+				json_get_vars \
+					eap_user_file dh_file ca_cert \
+					server_cert priv_key priv_key_pwd
 
-			# legacy compatibility
-			[ -n "$auth_server" ] || json_get_var auth_server server
-			[ -n "$auth_port" ] || json_get_var auth_port port
-			[ -n "$auth_secret" ] || json_get_var auth_secret key
+				append bss_conf "eap_server=$eap_server" "$N"
+				append bss_conf "eap_user_file=$eap_user_file" "$N"
+				append bss_conf "ca_cert=$ca_cert" "$N"
+				append bss_conf "server_cert=$server_cert" "$N"
+				append bss_conf "private_key=$priv_key" "$N"
+				append bss_conf "private_key_passwd=$priv_key_pwd" "$N"
+				append bss_conf "dh_file=$dh_file" "$N"
+			else
+				json_get_vars \
+					auth_server auth_secret auth_port \
+					dae_client dae_secret dae_port \
+					ownip radius_client_addr \
+					eap_reauth_period
 
-			set_default auth_port 1812
-			set_default dae_port 3799
+				# radius can provide VLAN ID for clients
+				vlan_possible=1
+
+				# legacy compatibility
+				[ -n "$auth_server" ] || json_get_var auth_server server
+				[ -n "$auth_port" ] || json_get_var auth_port port
+				[ -n "$auth_secret" ] || json_get_var auth_secret key
+
+				set_default auth_port 1812
+				set_default dae_port 3799
 
 
-			append bss_conf "auth_server_addr=$auth_server" "$N"
-			append bss_conf "auth_server_port=$auth_port" "$N"
-			append bss_conf "auth_server_shared_secret=$auth_secret" "$N"
+				append bss_conf "auth_server_addr=$auth_server" "$N"
+				append bss_conf "auth_server_port=$auth_port" "$N"
+				append bss_conf "auth_server_shared_secret=$auth_secret" "$N"
 
-			[ -n "$eap_reauth_period" ] && append bss_conf "eap_reauth_period=$eap_reauth_period" "$N"
+				[ -n "$eap_reauth_period" ] && append bss_conf "eap_reauth_period=$eap_reauth_period" "$N"
 
-			[ -n "$dae_client" -a -n "$dae_secret" ] && {
-				append bss_conf "radius_das_port=$dae_port" "$N"
-				append bss_conf "radius_das_client=$dae_client $dae_secret" "$N"
-			}
+				[ -n "$dae_client" -a -n "$dae_secret" ] && {
+					append bss_conf "radius_das_port=$dae_port" "$N"
+					append bss_conf "radius_das_client=$dae_client $dae_secret" "$N"
+				}
+			fi
 
 			[ -n "$ownip" ] && append bss_conf "own_ip_addr=$ownip" "$N"
 			[ -n "$radius_client_addr" ] && append bss_conf "radius_client_addr=$radius_client_addr" "$N"
