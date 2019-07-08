@@ -1,0 +1,17 @@
+--- a/src/openvpn/forward.c	2019-02-20 06:28:23.000000000 -0600
++++ b/src/openvpn/forward.c	2019-07-08 09:40:15.738633554 -0500
+@@ -1290,6 +1290,14 @@
+             }
+             else if (is_ipv6(TUNNEL_TYPE(c->c1.tuntap), &ipbuf))
+             {
++#if PASSTOS_CAPABILITY
++                /* extract TOS from IP header */
++                if (flags & PIPV4_PASSTOS)
++                {
++                    link_socket_extract_tos6(c->c2.link_socket, &ipbuf);
++                }
++#endif
++
+                 /* possibly alter the TCP MSS */
+                 if (flags & PIP_MSSFIX)
+                 {
