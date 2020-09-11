@@ -144,7 +144,7 @@
 &eth0 {
 	status = "okay";
 
-	pll-data = <0x0e000000 0x3c000101 0x3c001313>;
+	pll-data = <0x0e000000 0x00000101 0x00001313>;
 
 	/* ethernet MAC is stored in nvram */
 	phy-mode = "rgmii";
@@ -153,8 +153,6 @@
 	gmac-config {
 		device = <&gmac>;
 		rgmii-gmac0 = <1>;
-		rxd-delay = <3>;
-		rxdv-delay = <3>;
 	};
 };
 
